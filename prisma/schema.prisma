@@ -1,0 +1,86 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  DRIVER
+}
+
+enum TripType {
+  WORK
+  PRIVATE
+}
+
+enum TripStatus {
+  PLANNED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  password         String
+  name             String
+  role             Role
+  ownedVehicles    Vehicle[]        @relation("OwnerVehicles")
+  driverVehicle    Vehicle?         @relation("DriverVehicle")
+  driverVehicleId  String?          @unique
+  trips            Trip[]           @relation("DriverTrips")
+  locations        DriverLocation[] // 🔹 Added this to fix relation error
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model Vehicle {
+  id         String           @id @default(cuid())
+  carType    String
+  carNumber  String
+  owner      User             @relation("OwnerVehicles", fields: [ownerId], references: [id])
+  ownerId    String
+  driver     User?            @relation("DriverVehicle", fields: [driverId], references: [id])
+  driverId   String?          @unique
+  trips      Trip[]
+  locations  DriverLocation[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model Trip {
+  id                 String           @id @default(cuid())
+  type               TripType
+  status             TripStatus       @default(PLANNED)
+  driver             User             @relation("DriverTrips", fields: [driverId], references: [id])
+  driverId           String
+  vehicle            Vehicle          @relation(fields: [vehicleId], references: [id])
+  vehicleId          String
+  destinationPlaceId String?
+  destinationName    String?
+  polyline           String?
+  startedAt          DateTime?
+  endedAt            DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  locations          DriverLocation[]
+}
+
+model DriverLocation {
+  id        String   @id @default(cuid())
+  driver    User     @relation(fields: [driverId], references: [id])
+  driverId  String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  vehicleId String
+  trip      Trip?    @relation(fields: [tripId], references: [id])
+  tripId    String?
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+}
