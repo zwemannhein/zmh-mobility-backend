@@ -18,25 +18,26 @@ import { Role } from '@prisma/client';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // 🔹 Get all users (Admin only)
   @Get()
   @Roles(Role.ADMIN)
-  findAll() {
+  async findAll() {
     return this.usersService.findAll();
   }
 
-  // ✅ CREATE USER (Admin only)
+  // 🔹 Create new user (Admin only)
   @Post()
   @Roles(Role.ADMIN)
-  create(
-    @Body() dto: { name: string; email: string; password: string; role: Role },
+  async createUser(
+    @Body() body: { name: string; email: string; password: string; role: Role },
   ) {
-    return this.usersService.create(dto);
+    return this.usersService.create(body);
   }
 
-  // ✅ DELETE USER
+  // 🔹 Delete user by ID (Admin only)
   @Delete(':id')
   @Roles(Role.ADMIN)
-  delete(@Param('id') id: string) {
+  async deleteUser(@Param('id') id: string) {
     return this.usersService.delete(id);
   }
 }
